@@ -1,7 +1,12 @@
-
-from torchvision.datasets import ImageFolder
-from torch.utils.data import DataLoader, random_split, Subset
+#ds.py
+from PIL import Image
+import numpy as np
+import torch
+import cv2
+from config import num_batch
 from torchvision import datasets, transforms
+from mpipeline import get_landmarks
+from torch.utils.data import Subset, random_split, DataLoader, TensorDataset
 
 
 api_key = "KGAT_403dfa0d85a7eeead4d5d50ee9ce505a"
@@ -10,37 +15,54 @@ api_key = "KGAT_403dfa0d85a7eeead4d5d50ee9ce505a"
 
 def load_asl_dataset():
     preprocess = transforms.Compose([
-        transforms.Resize((128, 128)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.5, 0.5, 0.5],
-            std=[0.5, 0.5, 0.5]
-        )
+        transforms.Resize((224,224)),
     ])
+
+        
 
     dataset = datasets.ImageFolder(
         root="./asl_alphabet_train",
         transform=preprocess
     )
 
-    train_size = int(0.8 * len(dataset))
-    test_size = len(dataset) - train_size
-
-    train_set, test_set = random_split(
+    dataset = Subset(
         dataset,
-        [train_size, test_size]
+        range(300)
     )
 
-    dataloader = DataLoader(
-        train_set,
-        shuffle=True,
-        batch_size=64
+    X = []
+    y = []
+    for batch_idx, (img, label) in enumerate(dataset):
+        # if batch_idx == num_batch:
+        #     break
+        img = np.array(img)
+        landmark = get_landmarks(img)
+        if landmark is None:
+            continue
+
+        print(f"{batch_idx} ")
+        
+        X.append(landmark)
+        y.append(label)
+
+    torch.save((
+        torch.tensor(X, dtype=torch.float32),
+        torch.tensor(y, dtype=torch.long)
+    ), "landmarks.pt")
+
+    return X, y
+
+def asl_dataloader():
+    X, y = load_asl_dataset()
+    X = torch.tensor(X, dtype=torch.float32)
+    y = torch.tensor(y, dtype=torch.long)
+
+    dataset = TensorDataset(X, y)
+
+    loader = DataLoader(
+        dataset,
+        batch_size=64,
+        shuffle=True
     )
 
-    testloader = DataLoader(
-        test_set,
-        shuffle=False,
-        batch_size=64
-    )
-
-    return dataloader, testloader
+    return loader

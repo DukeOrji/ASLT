@@ -1,14 +1,20 @@
-from ds import load_asl_dataset
+#main.py
+from ds import asl_dataloader
 from server import Server
+from config import device
 
 
-dataloader, testloader = load_asl_dataset()
-server = Server(dataloader, testloader)
+landmarks = asl_dataloader()
+server = Server(landmarks)
 
 
-for range in range(15):
+print(next(server.model.parameters()).device)
+for i in range(15):
+    print(f"\nround {i+1}")
     print()
-    server.train()
+    loss, acc = server.train()
+    print(f"\nTraining  Loss: {loss}  Acc: {acc}")
 
     # f_loss, f_acc = server.evaluate()
-    # print(f"F Loss: {f_loss}   F Acc: {f_acc}")
+    # print(f"\nFinal Loss: {f_loss}  Acc: {f_acc}")
+    # print("\nExperiment Complete.")
