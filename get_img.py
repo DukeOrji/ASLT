@@ -6,35 +6,8 @@ from server import Server
 import torch
 from config import device
 from torch.utils.data import TensorDataset, DataLoader
+from class_names import classes
 
-classes = {
-    ord("a"): 0,
-    ord("b"): 1,
-    ord("c"): 2,
-    ord("d"): 3,
-    ord("e"): 4,
-    ord("f"): 5,
-    ord("g"): 6,
-    ord("h"): 7,
-    ord("i"): 8,
-    ord("j"): 9,
-    ord("k"): 10,
-    ord("l"): 11,
-    ord("m"): 12,
-    ord("n"): 13,
-    ord("o"): 14,
-    ord("p"): 15,
-    ord("q"): 16,
-    ord("r"): 17,
-    ord("s"): 18,
-    ord("t"): 19,
-    ord("u"): 20,
-    ord("v"): 21,
-    ord("w"): 22,
-    ord("x"): 23,
-    ord("y"): 24,
-    ord("z"): 25,
-}
 
 
 X = []
@@ -101,5 +74,4 @@ if os.path.exists("checkpoint.pth"):
     model_dict = checkpoint["model_state_dict"]
     server.set_weight(model_dict, optim_dict)
 
-loss, acc = server.evaluate()
-print(f"Evaluation Loss: {loss}  |  Acc: {acc}")
+server.predict_label()

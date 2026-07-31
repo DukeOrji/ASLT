@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch
 from models import MobileNetV3, ASLNet, LandmarkNet
 from config import device, num_batch
+from class_names import CLASS_NAMES
 import torch.optim as optim
 
 
@@ -61,7 +62,23 @@ class Server():
         jms.append(self.model.state_dict())
 
         return avg_loss, acc
-    
+        
+    def predict_label(self):
+        self.model.eval()
+        useful_label = []
+        for landmarks, _ in self.test_set:
+            landmarks = lm.to(device)
+            
+            pred = self.model(landmarks)
+            pred_label = pred.argmax(dim=1)
+            useful_label.extend(pred_label.cpu()tolist())
+
+        unique = set(useful_label)
+        for label in unique:
+            print(CLASS_NAMES[label])
+
+
+
     def evaluate(self):
 
         # self.model.load_state_dict(jms[0])
