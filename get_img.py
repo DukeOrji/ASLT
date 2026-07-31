@@ -1,4 +1,5 @@
 import cv2
+import os
 import numpy
 from mpipeline import get_landmarks
 from server import Server
@@ -38,6 +39,8 @@ classes = {
 
 X = []
 y = []
+if len(X) == 0:
+    print("Empty Dataset")
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 while True:
@@ -75,24 +78,28 @@ cv2.destroyAllWindows()
 
 print(len(y))
 print(len(X))
+input("")
 
-if os.path.exists("checkpoint.pth"):
-    checkpoint = torch.load("checkpoint.pth")
-    optim_dict = checkpoint["optimizer_state_dict"]
-    model_dict = checkpoint["model_state_dict"]
-
-X = torch.tensor(X, dtype=torch.float32, device=device)
-y = torch.tensor(y, dtype=torch.long, device=device)
+X = torch.tensor(X, dtype=torch.float32)
+y = torch.tensor(y, dtype=torch.long)
 
 dataset = TensorDataset(X, y)
 
 loader = DataLoader(
     dataset,
-    batch_size=64,
-    shuffle=False
+    batch_size=1,
+    shuffle=True
 )
 
+print(f"Dataset size: {len(dataset)}")
 server = Server(train_set=None, test_set=loader)
-server.set_weight(model_dict, optim_dict)
+
+if os.path.exists("checkpoint.pth"):
+    checkpoint = torch.load("checkpoint.pth", map_location=device)
+
+    optim_dict = checkpoint["optimizer_state_dict"]
+    model_dict = checkpoint["model_state_dict"]
+    server.set_weight(model_dict, optim_dict)
+
 loss, acc = server.evaluate()
-print(f"{loss}  |  {acc}")
+print(f"Evaluation Loss: {loss}  |  Acc: {acc}")

@@ -23,7 +23,7 @@ class Server():
         optim_weight = self.optim.state_dict()
         return global_weight, optim_weight
 
-    def set_weight(model_dict, optim_dict):
+    def set_weight(self, model_dict, optim_dict):
         self.model.load_state_dict(model_dict)
         self.optim.load_state_dict(optim_dict)
 
@@ -64,8 +64,8 @@ class Server():
     
     def evaluate(self):
 
-        self.model.load_state_dict(jms[0])
-        del jms[0]
+        # self.model.load_state_dict(jms[0])
+        # del jms[0]
 
         total = 0
         correct = 0
@@ -84,8 +84,8 @@ class Server():
                 loss = self.loss_fn(pred, labels)
                 losses.append(loss.item())
 
-                # if batch_idx % 5 == 0:
-                #     print(f"Img{batch_idx}  Loss: {loss}")
+                # if batch_idx % 2 == 0:
+                print(f"Img{batch_idx}  Loss: {loss}")
                 correct += (pred_labels == labels).sum().item()
                 total += labels.size(0)
 
