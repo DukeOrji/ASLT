@@ -27,7 +27,7 @@ def load_asl_dataset():
 
     dataset = Subset(
         dataset,
-        range(300)
+        range(len(dataset))
     )
 
     X = []
@@ -50,19 +50,33 @@ def load_asl_dataset():
         torch.tensor(y, dtype=torch.long)
     ), "landmarks.pt")
 
-    return X, y
+    
 
 def asl_dataloader():
-    X, y = load_asl_dataset()
-    X = torch.tensor(X, dtype=torch.float32)
-    y = torch.tensor(y, dtype=torch.long)
+    #load_asl_dataset()
+    X, y = torch.load("landmarks.pt")
+
+    print(X.shape)
+    print(y.shape)
 
     dataset = TensorDataset(X, y)
+    train_size = int(len(dataset) * 0.8)
+    test_size = len(dataset) - train_size
+
+    train_set, test_set = random_split(
+        dataset,
+        [train_size, test_size]
+    )
 
     loader = DataLoader(
-        dataset,
+        train_set,
         batch_size=64,
         shuffle=True
     )
+    test_loader = DataLoader(
+        test_set,
+        batch_size=64,
+        shuffle=False
+    )
 
-    return loader
+    return loader, test_loader

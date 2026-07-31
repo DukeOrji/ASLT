@@ -9,22 +9,31 @@ import torch.optim as optim
 jms = []
 
 class Server():
-    def __init__(self, landmarks):
+    def __init__(self, train_set, test_set):
         self.model = LandmarkNet()
         self.model = self.model.to(device)
-        self.landmarks = landmarks
+        self.train_set = train_set
+        self.test_set = test_set
         
         self.loss_fn = nn.CrossEntropyLoss()
         self.optim = optim.Adam(self.model.parameters(), lr=1e-3)
         
-    
+    def broadcast_weight(self):
+        global_weight = self.model.state_dict()
+        optim_weight = self.optim.state_dict()
+        return global_weight, optim_weight
+
+    def set_weight(model_dict, optim_dict):
+        self.model.load_state_dict(model_dict)
+        self.optim.load_state_dict(optim_dict)
+
     def train(self):
         self.model.train()
         correct = 0
         total = 0
         losses = []
 
-        for batch_idx, (lm, labels) in enumerate(self.landmarks):
+        for batch_idx, (lm, labels) in enumerate(self.train_set):
             # if batch_idx == num_batch:
             #     break
 
@@ -41,8 +50,8 @@ class Server():
             self.optim.step()
             losses.append(loss.item())
 
-            if batch_idx % 5 == 0:
-                print(f"Img{batch_idx}  Loss: {loss}")
+            # if batch_idx % 2 == 0:
+            #     print(f"Img{batch_idx}  Loss: {loss}")
 
             correct += (pred_labels == labels).sum().item()
             total += labels.size(0)
@@ -65,11 +74,11 @@ class Server():
         
         with torch.no_grad():
 
-            for batch_idx, (images, labels) in enumerate(self.testloader):
+            for batch_idx, (lm, labels) in enumerate(self.test_set):
                 
-                images = images.to(device)
+                landmarks = lm.to(device)
                 labels = labels.to(device)
-                pred = self.model(images)
+                pred = self.model(landmarks)
                 pred_labels = pred.argmax(dim=1)
 
                 loss = self.loss_fn(pred, labels)
