@@ -10,31 +10,16 @@ from class_names import classes
 
 
 
-X = []
+
 
 if len(X) == 0:
     print("Empty Dataset")
 
-
-def process():
-    
-    
-    print(len(X))
-    input("")
-
-    X_tensor = torch.tensor(X, dtype=torch.float32)
-    # y_tensor = torch.tensor(y, dtype=torch.long)
-
-    dataset = TensorDataset(X_tensor)
-
-    loader = DataLoader(
-        dataset,
-        batch_size=1,
-        shuffle=False
+def get_server():
+    server = Server(
+        train_set=None,
+        test_set=None
     )
-
-    print(f"Dataset size: {len(dataset)}")
-    server = Server(train_set=None, test_set=loader)
 
     if os.path.exists("checkpoint.pth"):
         checkpoint = torch.load("checkpoint.pth", map_location=device)
@@ -43,13 +28,22 @@ def process():
         model_dict = checkpoint["model_state_dict"]
         server.set_weight(model_dict, optim_dict)
 
-    server.predict_label()
-    X.clear()
-    #y.clear()
+    return server
 
 
+def process(server, landmarks):
+    
 
+    data = torch.tensor(landmarks, dtype=torch.float32, device=device).unsqueeze(0)
+
+    p_label = server.predict_label(data)
+    
+    return p_label
+
+
+current_word = []
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+server = get_server()
 while True:
     success, frame = cap.read()
 
@@ -66,20 +60,30 @@ while True:
 
     if key == ord(" "): #space to capture
         for _ in range(5): #increases likelihood of capturing a frame per click
+            success, frame = cap.read()
+            if not successs:
+                break
+
             landmarks = get_landmarks(frame)
             if landmarks is not None:
-                X.append(landmarks)
-                #y.append(current_label)
-                print("Frame Captured.")
+                
+                #print("Frame Captured.")
+                p_label = process(server, landmarks)
+                print(f"-- {p_label}")
+                current_word.append(p_label)
+
                 break
             
             else:
                 print("No hands detected.")
 
-    elif key == 9:
-        process()
+    elif key == 8: #backspace key
+        if current_word:
+            del current_word[-1]
+        print('\n', "".join(current_word))
         
     elif key == 27: #ESC to quit
+        print(f"Last word formed: {''.join(current_word)}")
         break
 
 cap.release()

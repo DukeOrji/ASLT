@@ -63,13 +63,13 @@ class Server():
 
         return avg_loss, acc
         
-    def predict_label(self):
+    def predict_label(self, dataset):
         self.model.eval()
 
         word = []
 
         with torch.no_grad():
-            for (landmarks,) in self.test_set:
+            for (landmarks,) in dataset:
 
                 landmarks = landmarks.to(device)
 
@@ -79,7 +79,8 @@ class Server():
 
                 word.append(CLASS_NAMES[pred_label])
 
-        print("".join(word))
+        conjoined = "".join(word)
+        return conjoined
 
 
 

@@ -14,7 +14,7 @@ hands = mp_hands.Hands(
 )
 
 def get_landmarks(frame):
-    
+    frame = cv2.resize(frame, (224, 224))
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = hands.process(rgb)
 
