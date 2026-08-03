@@ -12,8 +12,7 @@ from class_names import classes
 
 
 
-if len(X) == 0:
-    print("Empty Dataset")
+
 
 def get_server():
     server = Server(
@@ -36,9 +35,11 @@ def process(server, landmarks):
 
     data = torch.tensor(landmarks, dtype=torch.float32, device=device).unsqueeze(0)
 
-    p_label = server.predict_label(data)
+    p_label, confidence = server.predict_label(data)
+    if p_label == "space":
+        p_label = " "
     
-    return p_label
+    return p_label, confidence
 
 
 current_word = []
@@ -61,15 +62,15 @@ while True:
     if key == ord(" "): #space to capture
         for _ in range(5): #increases likelihood of capturing a frame per click
             success, frame = cap.read()
-            if not successs:
+            if not success:
                 break
 
             landmarks = get_landmarks(frame)
             if landmarks is not None:
                 
                 #print("Frame Captured.")
-                p_label = process(server, landmarks)
-                print(f"-- {p_label}")
+                p_label, confidence = process(server, landmarks)
+                print(f"-- {p_label}  | {confidence}")
                 current_word.append(p_label)
 
                 break

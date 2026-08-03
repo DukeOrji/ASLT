@@ -69,18 +69,22 @@ class Server():
         word = []
 
         with torch.no_grad():
-            for (landmarks,) in dataset:
+            
 
-                landmarks = landmarks.to(device)
+            data = dataset.to(device)
 
-                pred = self.model(landmarks)
+            pred = self.model(data)
 
-                pred_label = pred.argmax(dim=1).item()
+            pred_label = pred.argmax(dim=1).item()
 
-                word.append(CLASS_NAMES[pred_label])
+            #get confidence of prediction 
+            prob = torch.softmax(pred, dim=1)
+            conf, pred = prob.max(dim=1)
+
+            word.append(CLASS_NAMES[pred_label])
 
         conjoined = "".join(word)
-        return conjoined
+        return conjoined, conf.item()
 
 
 
