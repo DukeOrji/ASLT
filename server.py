@@ -65,17 +65,21 @@ class Server():
         
     def predict_label(self):
         self.model.eval()
-        useful_label = []
-        for landmarks, _ in self.test_set:
-            landmarks = lm.to(device)
-            
-            pred = self.model(landmarks)
-            pred_label = pred.argmax(dim=1)
-            useful_label.extend(pred_label.cpu()tolist())
 
-        unique = set(useful_label)
-        for label in unique:
-            print(CLASS_NAMES[label])
+        word = []
+
+        with torch.no_grad():
+            for (landmarks,) in self.test_set:
+
+                landmarks = landmarks.to(device)
+
+                pred = self.model(landmarks)
+
+                pred_label = pred.argmax(dim=1).item()
+
+                word.append(CLASS_NAMES[pred_label])
+
+        print("".join(word))
 
 
 
