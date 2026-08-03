@@ -79,12 +79,19 @@ class Server():
 
             #get confidence of prediction 
             prob = torch.softmax(pred, dim=1)
-            conf, pred = prob.max(dim=1)
+            top_conf, top_idx = torch.topk(prob, k=2, dim=1)
 
             word.append(CLASS_NAMES[pred_label])
 
-        conjoined = "".join(word)
-        return conjoined, conf.item()
+        first_label = CLASS_NAMES[top_idx[0][0].item()]
+        second_label = CLASS_NAMES[top_idx[0][1].item()]
+
+        return {
+            "prediction": first_label,
+            "confidence": top_conf[0][0].item(),
+            "second_prediction": second_label,
+            "second_confidence": top_conf[0][1].item(),
+        }
 
 
 
