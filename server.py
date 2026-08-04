@@ -84,6 +84,9 @@ class Server():
             word.append(CLASS_NAMES[pred_label])
 
         first_label = CLASS_NAMES[top_idx[0][0].item()]
+        if first_label == "space":
+            first_label = " "
+            
         second_label = CLASS_NAMES[top_idx[0][1].item()]
 
         return {

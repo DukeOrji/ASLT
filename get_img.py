@@ -11,9 +11,6 @@ from class_names import classes
 
 
 
-
-
-
 def get_server():
     server = Server(
         train_set=None,
