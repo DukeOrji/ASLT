@@ -145,7 +145,7 @@ class MainWindow(QMainWindow):
 
 
         
-        self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
             raise RuntimeError("Could not open webcam.")
         
