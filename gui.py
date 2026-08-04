@@ -1,7 +1,7 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QGridLayout, QPushButton, QLineEdit, QTextEdit, QComboBox, QListWidget, QSlider
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLineEdit, QGroupBox
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtGui import QImage, QPixmap, QIcon
 import cv2
 from server import Server
 from mpipeline import get_landmarks
@@ -76,19 +76,19 @@ class MainWindow(QMainWindow):
         data = torch.tensor(landmarks, dtype=torch.float32).unsqueeze(0)
         result = self.server.predict_label(data)
         self.current_letter.setText(
-            f"Current Letter: {result['prediction']}"
+            f"{result['prediction']}"
         )
 
         self.unc_letter.setText(
-            f"Maybe: {result['second_prediction']}"
+            f"{result['second_prediction']}"
         )
 
         self.confidence.setText(
-            f"Confidence: {result['confidence']:.1%}"
+            f"{result['confidence']:.1%}"
         )
 
         self.unc_confidence.setText(
-            f"Confidence: {result['second_confidence']:.1%}"
+            f"{result['second_confidence']:.1%}"
         )
 
         label = result["prediction"]
@@ -102,12 +102,48 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        with open("style.qss", 'r') as f:
+                self.setStyleSheet(f.read())
 
-        self.current_letter = QLabel("Current Letter:")
-        self.unc_letter = QLabel("Maybe:")
-        self.confidence = QLabel("Confidence: --%")
-        self.unc_confidence = QLabel("Confidence: --%")
+
+        pred_box = QGroupBox('ACTUAL')
+        alt_box = QGroupBox('MAYBE')
+        word_group = QGroupBox('CURRENT WORD')
+
+        pred_layout = QVBoxLayout()
+        alt_layout = QVBoxLayout()
+        word_layout = QVBoxLayout()
+
+        pred_box.setLayout(pred_layout)
+        alt_box.setLayout(alt_layout)
+        word_group.setLayout(word_layout)
+
+
+        self.current_letter = QLabel("")
+        self.unc_letter = QLabel("")
+        self.confidence = QLabel(" -- ")
+        self.unc_confidence = QLabel(" -- ")
         self.current_word = ''
+
+        self.unc_confidence.setStyleSheet("""
+        QLabel {
+            background-color: #8c898f;
+            font-size: 15px;
+            font-weight: bold;
+            color: black;
+        }
+        """)
+
+        self.confidence.setStyleSheet("""
+        QLabel {
+            background-color: #8c898f;
+            font-size: 15px;
+            font-weight: bold;
+            color: black;
+        }
+        """)
+
+
         
         self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         if not self.cap.isOpened():
@@ -123,38 +159,85 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("ASL Translator")
 
-        webcam_container = QWidget()
-        primary_container = QWidget()
+        main_container = QWidget()
+        self.setCentralWidget(main_container)
 
-        self.setCentralWidget(webcam_container)
+        main_layout = QHBoxLayout(main_container)
+        webcam_layout = QVBoxLayout()
+        side_layout = QVBoxLayout()
+        
 
-        webcam_layout = QGridLayout(webcam_container)
-        primary_layout = QGridLayout(primary_container)
+        #space/margin setting
+        main_layout.setSpacing(25)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+
+        webcam_layout.setSpacing(15)
+        side_layout.setSpacing(3)
         
 
         self.webcam = QLabel()
+        self.webcam.setStyleSheet("""
+        QLabel {
+            background-color: #8c898f;
+        }
+        """)
         self.webcam.setFixedSize(600, 400)
         self.webcam.setAlignment(Qt.AlignCenter)
 
 
+        current_letter_lab = QLabel('ACTUAL')
+        current_letter_lab.setStyleSheet("""
+        QLabel {
+            background-color: #8c898f;
+            color: cyan;
+            font-size: 10px;
+        }
+        """)
+
+        unc_letter_lab = QLabel('MAYBE')
+        unc_letter_lab.setStyleSheet("""
+        QLabel {
+            background-color: #8c898f;
+            color: red;
+            font-size: 10px;
+        }
+        """)
+
         
-        current_wl = QLabel('Current Word:')
+        current_wl = QLabel('CURRENT WORD')
+        current_wl.setStyleSheet("""
+        QLabel {
+            background-color: #8c898f;
+            font-size: 13px;
+            font-weight: bold;
+            color: black;
+        }
+        """)
+
         self.word_box = QLineEdit()
         self.word_box.setReadOnly(True)
 
-        confirm_btn = QPushButton('Confirm')
+        confirm_btn = QPushButton()
         confirm_btn.clicked.connect(self.capture_current_frame)
+        confirm_btn.setIcon(QIcon("capture.png"))
 
+        main_layout.addLayout(webcam_layout, 3)
+        main_layout.addLayout(side_layout, 1)
 
-        webcam_layout.addWidget(self.webcam, 0, 0)
-        webcam_layout.addWidget(primary_container, 0, 1)
-        primary_layout.addWidget(self.current_letter, 1, 0)
-        primary_layout.addWidget(self.unc_letter, 1, 1)
-        primary_layout.addWidget(self.confidence, 2, 0)
-        primary_layout.addWidget(self.unc_confidence, 2, 1)
-        primary_layout.addWidget(current_wl, 3, 0)
-        primary_layout.addWidget(self.word_box, 4, 0)
-        webcam_layout.addWidget(confirm_btn, 1, 0)
+        webcam_layout.addWidget(self.webcam, alignment=Qt.AlignCenter)
+        webcam_layout.addWidget(confirm_btn, alignment=Qt.AlignCenter)
+
+        pred_layout.addWidget(self.current_letter)
+        pred_layout.addWidget(self.confidence)
+        alt_layout.addWidget(self.unc_letter)
+        alt_layout.addWidget(self.unc_confidence)
+        word_layout.addWidget(self.word_box)
+
+        side_layout.addWidget(pred_box)
+        side_layout.addWidget(alt_box)
+        side_layout.addWidget(word_group)
+        side_layout.addStretch()
+
 
     
 app = QApplication(sys.argv) 
