@@ -147,7 +147,7 @@ python gui.py
 
 ## Model
 
-The classifier predicts one of the **26 ASL alphabet letters**.
+The classifier predicts one of the **26 ASL alphabet letters** and SPACE.
 
 Input:
 
