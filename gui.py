@@ -91,8 +91,14 @@ class MainWindow(QMainWindow):
             f"{result['second_confidence']:.1%}"
         )
 
-        label = result["prediction"]
-        self.current_word += label
+        self.prediction = result["prediction"]
+        self.second_prediction = result["second_prediction"]
+
+        
+    def send_label(self, letter):
+        if letter == "space":
+            letter = " "
+        self.current_word += letter
         self.word_box.setText(self.current_word)
 
     def remove_last_label(self):
@@ -102,59 +108,101 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        self.current_word = ''
+        self.current_alt_word = ''
+
         with open("style.qss", 'r') as f:
                 self.setStyleSheet(f.read())
 
+        #ACCURATE PREDICTION BUTTON
+        self.prediction_btn = QPushButton()
+        pred_layout = QVBoxLayout(self.prediction_btn)
 
-        pred_box = QGroupBox('ACTUAL')
-        alt_box = QGroupBox('MAYBE')
-        word_group = QGroupBox('CURRENT WORD')
-
-        pred_layout = QVBoxLayout()
-        alt_layout = QVBoxLayout()
-        word_layout = QVBoxLayout()
-
-        pred_box.setLayout(pred_layout)
-        alt_box.setLayout(alt_layout)
-        word_group.setLayout(word_layout)
-
+        actual_lab = QLabel('ACTUAL')
+        actual_lab.setAlignment(Qt.AlignCenter)
+        actual_lab.setProperty("class", "heading_true")
 
         self.current_letter = QLabel("")
-        self.unc_letter = QLabel("")
+        self.current_letter.setProperty("class", "label")
+        self.current_letter.setAlignment(Qt.AlignCenter)
+
         self.confidence = QLabel(" -- ")
+        self.confidence.setProperty("class", "confidence")
+        self.confidence.setAlignment(Qt.AlignCenter)
+
+        pred_layout.addWidget(actual_lab)
+        pred_layout.addWidget(self.current_letter)
+        pred_layout.addWidget(self.confidence)
+        pred_layout.setSpacing(15)
+        pred_layout.setContentsMargins(15, 15, 15, 15)
+
+        self.prediction_btn.clicked.connect(lambda: self.send_label(self.prediction))
+        self.prediction_btn.setFixedHeight(130)
+
+        #ALTERNATIVE PREDICTION BUTTON
+        self.alt_btn = QPushButton()
+        alt_layout = QVBoxLayout(self.alt_btn)
+
+        alt_lab = QLabel('ALTERNATE')
+        alt_lab.setAlignment(Qt.AlignCenter)
+        alt_lab.setProperty("class", "heading")
+
+        self.unc_letter = QLabel("")
+        self.unc_letter.setProperty("class", "label")
+        self.unc_letter.setAlignment(Qt.AlignCenter)
+
         self.unc_confidence = QLabel(" -- ")
-        self.current_word = ''
+        self.unc_confidence.setProperty("class", "confidence")
+        self.unc_confidence.setAlignment(Qt.AlignCenter)
 
-        self.unc_confidence.setStyleSheet("""
-        QLabel {
-            background-color: #8c898f;
-            font-size: 15px;
-            font-weight: bold;
-            color: black;
+        alt_layout.addWidget(alt_lab)
+        alt_layout.addWidget(self.unc_letter)
+        alt_layout.addWidget(self.unc_confidence)
+        alt_layout.setSpacing(15)
+        alt_layout.setContentsMargins(15, 15, 15, 15)
+        self.alt_btn.clicked.connect(lambda: self.send_label(self.second_prediction))
+        self.alt_btn.setFixedHeight(130)
+
+        #word output
+        word_group = QGroupBox('CURRENT WORD')
+        word_group.setAlignment(Qt.AlignCenter)
+        word_group.setStyleSheet("""
+        QGroupBox {
+        color: green;
+        font-size: 13px;
+        font-weight: bold;
         }
         """)
+        word_group.setFixedHeight(130)
 
-        self.confidence.setStyleSheet("""
-        QLabel {
-            background-color: #8c898f;
-            font-size: 15px;
-            font-weight: bold;
-            color: black;
-        }
-        """)
-
-
+        word_layout = QVBoxLayout()
+        word_group.setLayout(word_layout)
         
+        self.word_box = QLineEdit()
+        #self.word_box.setFixedheight(50)
+        self.word_box.setReadOnly(True)
+
+        word_layout.addWidget(self.word_box)
+
+        #CONSTANT PROPORTION
+        self.prediction_btn.setFixedSize(180, 170)
+        self.alt_btn.setFixedSize(180, 170)
+        word_group.setFixedSize(180, 130)
+
+
+
+        #OPEN CAMERA
         self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
             raise RuntimeError("Could not open webcam.")
         
-
+        #UPDATE FRAME EVERY 30ms
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
-        self.timer.start(30) #update frame every 30ms
+        self.timer.start(30)
 
-        #initialize server and run prediction
+        #INITIALIZE SERVER
         self.server = self.get_server()
 
         self.setWindowTitle("ASL Translator")
@@ -169,74 +217,38 @@ class MainWindow(QMainWindow):
 
         #space/margin setting
         main_layout.setSpacing(25)
-        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setContentsMargins(15, 15, 15, 15)
 
         webcam_layout.setSpacing(15)
         side_layout.setSpacing(3)
         
-
+        #WEBCAM SETTINGS
         self.webcam = QLabel()
-        self.webcam.setStyleSheet("""
-        QLabel {
-            background-color: #8c898f;
-        }
-        """)
+        self.webcam.setProperty("class", "webcam")
+        
         self.webcam.setFixedSize(600, 400)
         self.webcam.setAlignment(Qt.AlignCenter)
 
-
-        current_letter_lab = QLabel('ACTUAL')
-        current_letter_lab.setStyleSheet("""
-        QLabel {
-            background-color: #8c898f;
-            color: cyan;
-            font-size: 10px;
-        }
-        """)
-
-        unc_letter_lab = QLabel('MAYBE')
-        unc_letter_lab.setStyleSheet("""
-        QLabel {
-            background-color: #8c898f;
-            color: red;
-            font-size: 10px;
-        }
-        """)
-
-        
-        current_wl = QLabel('CURRENT WORD')
-        current_wl.setStyleSheet("""
-        QLabel {
-            background-color: #8c898f;
-            font-size: 13px;
-            font-weight: bold;
-            color: black;
-        }
-        """)
-
-        self.word_box = QLineEdit()
-        self.word_box.setReadOnly(True)
-
+        #CAMERA ICON SETTINGS
         confirm_btn = QPushButton()
         confirm_btn.clicked.connect(self.capture_current_frame)
         confirm_btn.setIcon(QIcon("capture.png"))
 
+        #LAYOUT SETTINGS
         main_layout.addLayout(webcam_layout, 3)
         main_layout.addLayout(side_layout, 1)
 
+        #PRIMARY
         webcam_layout.addWidget(self.webcam, alignment=Qt.AlignCenter)
         webcam_layout.addWidget(confirm_btn, alignment=Qt.AlignCenter)
+        
 
-        pred_layout.addWidget(self.current_letter)
-        pred_layout.addWidget(self.confidence)
-        alt_layout.addWidget(self.unc_letter)
-        alt_layout.addWidget(self.unc_confidence)
-        word_layout.addWidget(self.word_box)
-
-        side_layout.addWidget(pred_box)
-        side_layout.addWidget(alt_box)
-        side_layout.addWidget(word_group)
+        #SECONDARY
+        side_layout.addWidget(self.prediction_btn, alignment=Qt.AlignTop)
+        side_layout.addWidget(self.alt_btn, alignment=Qt.AlignTop)
+        side_layout.addWidget(word_group, alignment=Qt.AlignTop)
         side_layout.addStretch()
+        
 
 
     

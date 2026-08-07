@@ -1,7 +1,35 @@
 
 QMainWindow {
-    background-color: #8c898f;
+    background-color: #222121;
 }
+
+QLabel[class="heading_true"] {
+    color: blue;
+    font-size: 13px;
+}
+
+QLabel[class="label"] {
+    background-color: #3a3a3a;
+    font-size: 50px;
+    font-weight: bold;
+    color: white;
+}
+
+QLabel[class="confidence"] {
+    background-color: #3a3a3a;
+    font-size: 10px;
+    color: white;
+}
+
+QLabel[class="heading"] {
+    color: red;
+    font-size: 13px;
+}
+
+QLabel[class="webcam"] {
+    background-color: #222121;
+}
+
 
 QLabel {
     background-color: #b8c5d1;
@@ -11,23 +39,22 @@ QLabel {
 }
 
 QPushButton {
-    background-color: #44372f;
+    background-color: #3a3a3a;
     
     border: 2px solid #555;
-    border-radius: 10px;
-    padding: 10px;
-    font-size: 10px;
-    min_width: 160px;
-    max-width: 160px;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: left;
     
 }
 
 QPushButton:hover {
-    background-color: #333847;
+    border: 2px solid #00c8ff;
+    background-color: #444;
 }
 
 QPushButton:pressed {
-    background-color: #dadeeb;
+    background-color: #2d2d2d;
 }
 
 QLineEdit {
@@ -37,7 +64,7 @@ QLineEdit {
     color: black;
     font-size: 13px;
     padding: 8px;
-    min_width: 300px;
+    min-height: 10px;
     
 
 }
